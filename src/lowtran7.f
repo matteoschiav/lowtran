@@ -3,7 +3,9 @@
      & MODELPy,ITYPEPy,IEMSCTPy,IMpy,
      & ISEASNPy,MLpy,IRD1py,
      & ZMDLpy, Ppy, Tpy,WMOLpy,
-     & H1Py,H2Py,ANGLEPy,RangePy)
+     & H1Py,H2Py,ANGLEPy,RangePy,
+     & IHAZEPy, IVULCNPy, ICSTLPy, ICLDPy,
+     & VisPy, RainRtPy, gndAltPy)
 
 ! note MLpy is implicit, don't pass it in from Numpy
       Logical,Intent(in) :: Python
@@ -14,6 +16,8 @@
       Real, Intent(Out) :: TXPy(nwl,63), VPy(nwl), ALAMPy(nwl),
      & TRACEPy(nwl),UNIFPy(nwl), SUMAPy(nwl), IrradPy(nwl,3),
      & SumVVPy(nwl)
+      Real, Intent(in) :: VisPy, RainRtPy, gndAltPy
+      Integer,Intent(in) :: IHAZEPy, IVULCNPy, ICSTLPy, ICLDPy
 
 !------------------------------
 c written to TAPE6:
@@ -1044,8 +1048,9 @@ C
       If (Python) Then
       !FIXME make it read input parameter
         ISEASN=ISEASNPy
-        IHAZE=0;IVULCN=0; ICSTL=0; ICLD=0; IVSA=0; VIS=0.;
-        WSS=0.; WHH=0.; RAINRT=0.; GNDALT=0.
+        IHAZE=IHAZEPy;IVULCN=IVULCNPy; ICSTL=ICSTLPy; ICLD=ICLDPy;
+        IVSA=0; VIS=VisPy;
+        WSS=0.; WHH=0.; RAINRT=RainRtPy; GNDALT=gndAltPy
       Else
        READ(IRD,1200)IHAZE,ISEASN,IVULCN,ICSTL,ICLD,
      & IVSA,VIS,WSS,WHH,RAINRT,GNDALT

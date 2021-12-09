@@ -87,7 +87,8 @@ def golowtran(c1: dict[str, Any]) -> xarray.Dataset:
     # %% default parameters
     c1.setdefault("time", None)
 
-    defp = ("h1", "h2", "angle", "im", "iseasn", "ird1", "range_km", "zmdl", "p", "t")
+    defp = ("h1", "h2", "angle", "im", "iseasn", "ird1", "range_km", "zmdl", "p", "t", 
+            "ihaze", "ivulcn", "icstl", "icld", "vis", "rainRt", "gndAlt")
     for p in defp:
         c1.setdefault(p, 0)
 
@@ -131,6 +132,13 @@ def golowtran(c1: dict[str, Any]) -> xarray.Dataset:
         c1["h2"],
         c1["angle"],
         c1["range_km"],
+        c1["ihaze"],
+        c1["ivulcn"],
+        c1["icstl"],
+        c1["icld"],
+        c1["vis"],
+        c1["rainRt"],
+        c1["gndAlt"]
     )
 
     dims = ("time", "wavelength_nm", "angle_deg")
