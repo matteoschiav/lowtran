@@ -1,14 +1,15 @@
+from __future__ import annotations
 from pathlib import Path
 from pandas import read_csv
 from dateutil.parser import parse
 import xarray
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 
 from .base import loopangle, loopuserdef, golowtran
 
 
-def scatter(c1: Dict[str, Any]) -> xarray.Dataset:
+def scatter(c1: dict[str, Any]):
     # %% low-level Lowtran configuration for this scenario, don't change
     c1.update(
         {
@@ -20,7 +21,7 @@ def scatter(c1: Dict[str, Any]) -> xarray.Dataset:
     return loopangle(c1)
 
 
-def irradiance(c1: Dict[str, Any]) -> xarray.Dataset:
+def irradiance(c1: dict[str, Any]):
     c1.update(
         {
             "itype": 3,  # 3: observer to space
@@ -31,7 +32,7 @@ def irradiance(c1: Dict[str, Any]) -> xarray.Dataset:
     return loopangle(c1)
 
 
-def radiance(c1: Dict[str, Any]) -> xarray.Dataset:
+def radiance(c1: dict[str, Any]):
 
     c1.update(
         {
@@ -43,7 +44,7 @@ def radiance(c1: Dict[str, Any]) -> xarray.Dataset:
     return loopangle(c1)
 
 
-def transmittance(c1: Dict[str, Any]) -> xarray.Dataset:
+def transmittance(c1: dict[str, Any]):
 
     c1.update(
         {
@@ -55,7 +56,7 @@ def transmittance(c1: Dict[str, Any]) -> xarray.Dataset:
     return loopangle(c1)
 
 
-def horizrad(infn: Path, outfn: Path, c1: Dict[str, Any]) -> xarray.Dataset:
+def horizrad(infn: Path, outfn: Path, c1: dict[str, Any]):
     """
     read CSV, simulate, write, plot
     """
@@ -97,7 +98,7 @@ def horizrad(infn: Path, outfn: Path, c1: Dict[str, Any]) -> xarray.Dataset:
     return TR
 
 
-def horiztrans(c1: Dict[str, Any]) -> xarray.Dataset:
+def horiztrans(c1: dict[str, Any]):
 
     c1.update(
         {
@@ -112,7 +113,7 @@ def horiztrans(c1: Dict[str, Any]) -> xarray.Dataset:
     return golowtran(c1)
 
 
-def userhoriztrans(c1: Dict[str, Any]) -> xarray.Dataset:
+def userhoriztrans(c1: dict[str, Any]):
 
     c1.update(
         {

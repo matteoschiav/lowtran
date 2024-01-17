@@ -3,18 +3,55 @@ import logging
 import xarray
 import numpy as np
 from typing import Any
+from pathlib import Path
+import importlib.util
+import distutils.sysconfig
+import os
+from types import ModuleType
 
-try:
-    import lowtran7  # don't use dot in front, it's linking to .pyd or .so
-except ImportError as e:
-    raise ImportError(
-        f"you must compile the Fortran code first. f2py -m lowtran7 -c src/lowtran7.f  {e}"
-    )
+from .cmake import build
 
 
-def nm2lt7(
-    short_nm: float, long_nm: float, step_cminv: float = 20
-) -> tuple[float, float, float]:
+def check() -> ModuleType:
+    try:
+        lowtran7 = import_f2py_mod("lowtran7")
+    except ImportError:
+        src = Path(__file__).parent
+        build(source_dir=src, build_dir=src / "build")
+        lowtran7 = import_f2py_mod("lowtran7")
+
+    return lowtran7
+
+
+def import_f2py_mod(name: str) -> ModuleType:
+
+    if os.name == "nt":
+        # https://github.com/space-physics/lowtran/issues/19
+        # code inspired by scipy._distributor_init.py for loading DLLs on Window
+        dll_path = (Path(__file__) / "../build/lowtran7/.libs").resolve()
+        if dll_path.is_dir():
+            # add the folder for Python 3.8 and above
+            logging.info(f"Adding {dll_path} to DLL search path")
+            os.add_dll_directory(dll_path)  # type: ignore
+        else:
+            logging.info(f"Could not find {dll_path} to add to DLL search path")
+
+    mod_name = name + distutils.sysconfig.get_config_var("EXT_SUFFIX")  # type: ignore
+    mod_file = Path(__file__).parent / mod_name
+    if not mod_file.is_file():
+        raise ModuleNotFoundError(mod_file)
+    spec = importlib.util.spec_from_file_location(name, mod_file)
+    if spec is None:
+        raise ModuleNotFoundError(f"{name} not found in {mod_file}")
+    mod = importlib.util.module_from_spec(spec)
+    if mod is None:
+        raise ImportError(f"could not import {name} from {mod_file}")
+    spec.loader.exec_module(mod)  # type: ignore
+
+    return mod
+
+
+def nm2lt7(short_nm: float, long_nm: float, step_cminv: float = 20) -> tuple[float, float, float]:
     """converts wavelength in nm to cm^-1
     minimum meaningful step is 20, but 5 is minimum before crashing lowtran
 
@@ -27,12 +64,13 @@ def nm2lt7(
     short = 1e7 / short_nm
     long = 1e7 / long_nm
 
-    N = int(np.ceil((short - long) / step_cminv)) + 1  # yes, ceil
+    N = int(np.ceil((short - long) / step_cminv)) + 1
+    # yes, ceil
 
     return short, long, N
 
 
-def loopuserdef(c1: dict[str, Any]) -> xarray.Dataset:
+def loopuserdef(c1: dict[str, Any]):
     """
     golowtran() is for scalar parameters only
     (besides vector of wavelength, which Lowtran internally loops over)
@@ -67,7 +105,7 @@ def loopuserdef(c1: dict[str, Any]) -> xarray.Dataset:
     return TR
 
 
-def loopangle(c1: dict[str, Any]) -> xarray.Dataset:
+def loopangle(c1: dict[str, Any]):
     """
     loop over "ANGLE"
     """
@@ -82,7 +120,7 @@ def loopangle(c1: dict[str, Any]) -> xarray.Dataset:
     return TR
 
 
-def golowtran(c1: dict[str, Any]) -> xarray.Dataset:
+def golowtran(c1: dict[str, Any]):
     """directly run Fortran code"""
     # %% default parameters
     c1.setdefault("time", None)
@@ -95,9 +133,7 @@ def golowtran(c1: dict[str, Any]) -> xarray.Dataset:
     c1.setdefault("wmol", [0] * 12)
     # %% input check
     assert len(c1["wmol"]) == 12, "see Lowtran user manual for 12 values of WMOL"
-    assert np.isfinite(
-        c1["h1"]
-    ), "per Lowtran user manual Table 14, H1 must always be defined"
+    assert np.isfinite(c1["h1"]), "per Lowtran user manual Table 14, H1 must always be defined"
     # %% setup wavelength
     c1.setdefault("wlstep", 20)
     if c1["wlstep"] < 5:
@@ -112,6 +148,9 @@ def golowtran(c1: dict[str, Any]) -> xarray.Dataset:
     Note we invoke case "3a" from table 14, only observer altitude and apparent
     angle are specified
     """
+
+    lowtran7 = check()
+
     Tx, V, Alam, trace, unif, suma, irrad, sumvv = lowtran7.lwtrn7(
         True,
         nwl,
