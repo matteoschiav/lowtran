@@ -14,7 +14,7 @@ user manual:
 www.dtic.mil/dtic/tr/fulltext/u2/a206773.pdf
 """
 
-from .base import check, golowtran, nm2lt7
+from .base import check, golowtran, nm2lt7, loopangle
 from .scenarios import (
     scatter,
     irradiance,
